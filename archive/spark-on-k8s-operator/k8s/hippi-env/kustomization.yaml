@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: spark-jobs
+nameSuffix: -routine-efc603b085c3465b
+
+bases:
+- ../examples
+
+patchesStrategicMerge:
+- custom-image.yaml
+- custom-priority-class-routine.yaml
+- node-affinity.yaml
+- service-account.yaml
+- spark-py-pi-args.yaml
+- volcano-scheduler.yaml

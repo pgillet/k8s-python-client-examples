@@ -1,0 +1,7 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: pyspark-pi
+spec:
+  batchSchedulerOptions:
+    priorityClassName: "urgent"

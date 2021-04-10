@@ -1,0 +1,36 @@
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: routine
+value: 2
+preemptionPolicy: Never
+globalDefault: false
+description: "Routine priority"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: urgent
+value: 10
+preemptionPolicy: Never
+globalDefault: false
+description: "Urgent priority"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: exceptional
+value: 50
+preemptionPolicy: Never
+globalDefault: false
+description: "Exceptional priority"
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: rush
+value: 100
+preemptionPolicy: PreemptLowerPriority
+globalDefault: false
+description: "Rush priority"

@@ -1,0 +1,61 @@
+apiVersion: sparkoperator.k8s.io/v1beta2
+kind: SparkApplication
+metadata:
+  name: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  namespace: ${NAMESPACE}
+spec:
+  arguments:
+  - "2"
+  - "0.001"
+  batchScheduler: volcano
+  batchSchedulerOptions:
+    priorityClassName: ${PRIORITY_CLASS_NAME}
+  driver:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: type
+              operator: In
+              values: [${DRIVER_NODE_AFFINITIES}]
+    coreLimit: 1200m
+    cores: 1
+    labels:
+      # Redundant with sparkoperator.k8s.io/app-name, but allow
+      # to use the same label selectors across Spark applications
+      # launched by Spark Operator or by spark-submit
+      app-name: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+      version: 3.0.0
+    memory: 512m
+    serviceAccount: ${SERVICE_ACCOUNT_NAME}
+  executor:
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: type
+              operator: In
+              values: [${EXECUTOR_NODE_AFFINITIES}]
+    cores: 1
+    instances: 2
+    labels:
+      version: 3.0.0
+    memory: 512m
+  image: eu.gcr.io/hippi-spark-k8s/spark-py:3.0.1
+  imagePullPolicy: IfNotPresent
+  mainApplicationFile: https://storage.googleapis.com/hippi-spark-k8s-bucket/long_running_pi.py
+  mode: cluster
+  pythonVersion: "2"
+  restartPolicy:
+    onFailureRetries: 3
+    onFailureRetryInterval: 10
+    onSubmissionFailureRetries: 5
+    onSubmissionFailureRetryInterval: 20
+    type: OnFailure
+  sparkConf:
+    spark.ui.proxyBase: /pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  sparkVersion: 3.0.0
+  timeToLiveSeconds: 86400
+  type: Python

@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    app-name: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  name: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}-ui-ingress
+  namespace: ${NAMESPACE}
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-redirect-from: "http://$host/"
+    nginx.ingress.kubernetes.io/proxy-redirect-to: "http://$host/pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}/"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}(/|$)(.*)
+        backend:
+          serviceName: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}-ui-svc
+          servicePort: 4040

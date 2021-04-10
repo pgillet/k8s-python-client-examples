@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: ${NAMESPACE}
+nameSuffix: ${NAME_SUFFIX}
+
+bases:
+- ../examples
+
+patchesStrategicMerge:
+- custom-image.yaml
+- custom-priority-class-${PRIORITY_CLASS_NAME}.yaml
+- node-affinity.yaml
+- service-account.yaml
+- spark-py-pi-args.yaml
+- volcano-scheduler.yaml

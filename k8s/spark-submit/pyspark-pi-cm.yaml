@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    app-name: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  name: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}-cm
+  namespace: ${NAMESPACE}
+data:
+  PYTHON_MAIN: https://storage.googleapis.com/hippi-spark-k8s-bucket/long_running_pi.py
+  # Comma-separated list of .zip, .egg, or .py files dependencies for Python apps.
+  # spark.submit.pyFiles can be used instead in spark-defaults.conf below.
+  # PYTHONPATH: ...
+  spark-env.sh: |
+    #!/usr/bin/env bash
+
+    export DUMMY=dummy
+    echo "Here we are, ${DUMMY}!"
+  spark-defaults.conf: |
+    spark.master                                k8s://https://kubernetes.default
+    spark.submit.deployMode                     client
+
+    spark.executor.instances                    2
+    spark.executor.cores                        1
+    spark.executor.memory                       512m
+
+    spark.kubernetes.executor.container.image   eu.gcr.io/hippi-spark-k8s/spark-py:3.0.1
+    spark.kubernetes.container.image.pullPolicy IfNotPresent
+    spark.kubernetes.namespace                  ${NAMESPACE}
+    # Must match the mount path of the ConfigMap volume in driver pod
+    spark.kubernetes.executor.podTemplateFile   /spark-conf/executor-pod-template.yaml
+    spark.kubernetes.pyspark.pythonVersion      2
+    spark.kubernetes.driver.pod.name            pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}-driver
+
+    spark.driver.host                           pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}-driver-svc
+    spark.driver.port                           5678
+
+    # Config params for use with an ingress to expose the Web UI
+    spark.ui.proxyBase                          /pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+    # spark.ui.proxyRedirectUri                   http://<load balancer static IP address>
+  executor-pod-template.yaml: |
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        app-name: pyspark-pi-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+        spark-role: executor
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: type
+                operator: In
+                values: [${EXECUTOR_NODE_AFFINITIES}]
+      priorityClassName: ${PRIORITY_CLASS_NAME}
+      schedulerName: volcano

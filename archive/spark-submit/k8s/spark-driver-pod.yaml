@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: pyspark-pi-driver-svc-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  name: pyspark-pi-driver-svc-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  namespace: ${NAMESPACE}
+spec:
+  clusterIP: None
+  ports:
+  - name: 5678-5678
+    port: 5678
+    protocol: TCP
+    targetPort: 5678
+  selector:
+    app: pyspark-pi-driver-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-config
+  namespace: ${NAMESPACE}
+data:
+  executor-pod-template.yaml: |
+    apiVersion: v1
+    kind: Pod
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: type
+                operator: In
+                values:
+                - compute
+      # TODO: find a way to parameterize priorityClassName
+      # priorityClassName: routine
+      schedulerName: volcano
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: pyspark-pi-driver-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  name: pyspark-pi-driver-${PRIORITY_CLASS_NAME}${NAME_SUFFIX}
+  namespace: ${NAMESPACE}
+spec:
+  containers:
+  - name: pyspark-pi
+    image: eu.gcr.io/hippi-spark-k8s/spark-py:3.0.1
+    imagePullPolicy: IfNotPresent
+    ports:
+    - containerPort: 5678
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 1
+      limits:
+        cpu: 1200m
+    env:
+    - name: SPARK_HOME
+      value: /opt/spark 
+    - name: K8S_URL
+      value: https://kubernetes.default
+    - name: NAME_SUFFIX
+      value: ${NAME_SUFFIX}
+    - name: SPARK_IMAGE
+      value: eu.gcr.io/hippi-spark-k8s/spark-py:3.0.1
+    - name: K8S_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    args:
+    - $(SPARK_HOME)/bin/spark-submit
+    - --master
+    - k8s://$(K8S_URL)
+    - --deploy-mode
+    - client
+    - --conf
+    - spark.executor.instances=2
+    - --conf
+    - spark.executor.cores=1
+    - --conf
+    - spark.executor.memory=512m
+    - --conf
+    - spark.kubernetes.executor.container.image=$(SPARK_IMAGE)
+    - --conf
+    - spark.kubernetes.container.image.pullPolicy=IfNotPresent
+    - --conf
+    - spark.kubernetes.namespace=$(K8S_NAMESPACE)
+    - --conf
+    - spark.kubernetes.executor.podTemplateFile=/config/executor-pod-template.yaml
+    - --conf
+    - spark.kubernetes.pyspark.pythonVersion=2
+    - --conf
+    - spark.driver.host=pyspark-pi-driver-svc$(NAME_SUFFIX)
+    - --conf
+    - spark.driver.port=5678
+    - --conf
+    - spark.kubernetes.driver.pod.name=pyspark-pi-driver$(NAME_SUFFIX)
+    - https://storage.googleapis.com/hippi-spark-k8s-bucket/long_running_pi.py
+    - "2"
+    - "0.001"
+    volumeMounts:
+      - name: spark-config
+        mountPath: "/config"
+        readOnly: true
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+            - key: type
+              operator: In
+              values:
+                - driver
+  priorityClassName: ${PRIORITY_CLASS_NAME}
+  restartPolicy: OnFailure
+  schedulerName: volcano
+  serviceAccountName: ${SERVICE_ACCOUNT_NAME}
+  volumes:
+    - name: spark-config
+      configMap:
+        name: spark-config
+        items:
+        - key: executor-pod-template.yaml
+          path: executor-pod-template.yaml

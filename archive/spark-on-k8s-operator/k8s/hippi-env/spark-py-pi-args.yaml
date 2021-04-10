@@ -1,0 +1,11 @@
+apiVersion: "sparkoperator.k8s.io/v1beta2"
+kind: SparkApplication
+metadata:
+  name: pyspark-pi
+spec:
+  mainApplicationFile: https://storage.googleapis.com/hippi-spark-k8s-bucket/long_running_pi.py
+  arguments:
+  - "2"
+  - "0.001"
+  executor:
+    instances: 2
