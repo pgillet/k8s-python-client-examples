@@ -3,7 +3,7 @@
 # set -eux
 
 export NAMESPACE=spark-jobs
-export SERVICE_ACCOUNT_NAME=hippi-spark
+export SERVICE_ACCOUNT_NAME=driver-sa
 PRIORITY_CLASSES=("routine" "urgent" "exceptional" "rush")
 NUMBER_REGEX='^[0-9]+$'
 

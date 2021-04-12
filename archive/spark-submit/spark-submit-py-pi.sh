@@ -8,7 +8,7 @@ SPARK_IMAGE=eu.gcr.io/hippi-spark-k8s/spark-py:3.0.1
 # Use 'kubectl proxy' to communicate to the Kubernetes API
 K8S_URL=http://127.0.0.1:8001
 NAMESPACE=spark-jobs
-SERVICE_ACCOUNT_NAME=hippi-spark
+SERVICE_ACCOUNT_NAME=driver-sa
 
 # Templates
 DRIVER_TMPL=/tmp/driver-template_$$.yaml

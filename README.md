@@ -12,7 +12,7 @@ This command creates a new service account named `python-client-sa`, a new role 
 `spark-jobs` namespace and then binds the new role to the newly created service account.
 
 **WARNING**: The `python-client-sa` is the service account that will provide the identity for the Kubernetes Python 
-Client in the `spark_client` library. Do not confuse this service account with the `hippi-spark` service account for 
+Client in the `spark_client` library. Do not confuse this service account with the `driver-sa` service account for 
 driver pods.
 
 # The Easy Way

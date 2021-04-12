@@ -26,7 +26,7 @@ def main():
     name_suffix = "-" + binascii.b2a_hex(os.urandom(8))
     priority_class_name = "routine"
     env_subst = {"${NAMESPACE}": namespace,
-                 "${SERVICE_ACCOUNT_NAME}": "hippi-spark",
+                 "${SERVICE_ACCOUNT_NAME}": "driver-sa",
                  "${DRIVER_NODE_AFFINITIES}": "driver",
                  "${EXECUTOR_NODE_AFFINITIES}": "compute",
                  "${NAME_SUFFIX}": name_suffix,
